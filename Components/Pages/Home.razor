@@ -1,0 +1,70 @@
+@page "/"
+@inject CanvasClient Canvas
+<PageTitle>Canvas Assignment Tracker</PageTitle>
+<main>
+    <header>
+        <p class="eyebrow">CANVAS / STUDENT TOOLS</p>
+        <h1>Assignment Tracker</h1>
+        <p>See what’s coming up across your courses, ordered by due date.</p>
+    </header>
+    <form action="/" method="get">
+        <label for="days">Show assignments due in the next</label>
+        <div class="controls">
+            <input id="days" name="days" type="number" min="1" max="365" value="@selectedDays" required />
+            <span>days</span><button type="submit">Load assignments</button>
+        </div>
+    </form>
+    @if (error is not null)
+    {
+        <p class="error" role="alert">@error</p>
+    }
+    @if (result is not null)
+    {
+        @foreach (var warning in result.Warnings) { <p class="warning" role="alert">@warning</p> }
+        <h2>@result.Assignments.Count upcoming assignment@(result.Assignments.Count == 1 ? "" : "s")</h2>
+        @if (result.Warnings.Count > 0) { <p>Some courses could not be loaded. These results may be incomplete.</p> }
+        @if (result.Assignments.Count > 0)
+        {
+            <p>Due dates use your browser’s local time zone (UTC if JavaScript is disabled).</p>
+            <div class="table-wrap">
+                <table>
+                    <caption class="sr-only">Upcoming assignments sorted by due date</caption>
+                    <thead><tr><th scope="col">Assignment</th><th scope="col">Course</th><th scope="col">Due</th><th scope="col">Urgency</th></tr></thead>
+                    <tbody>
+                        @foreach (var row in result.Assignments)
+                        {
+                            <tr><td><strong>@row.Name</strong></td><td>@row.Course</td>
+                                <td><time datetime="@row.Due.ToString("O")">@row.Due.UtcDateTime.ToString("MMM d, yyyy HH:mm 'UTC'")</time></td>
+                                <td><span class="badge @row.Urgency">@row.Label</span></td></tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else { <p class="empty">No upcoming assignments found in this date range. Try a larger number of days.</p> }
+    }
+    else if (Days is null) { <p class="empty">Choose a date range and load your assignments to get started.</p> }
+    <footer>Includes dated assignments from active student courses, including work already submitted. Past-due assignments and assignments without a due date are excluded.</footer>
+</main>
+
+@code {
+    [SupplyParameterFromQuery(Name = "days")] public string? Days { get; set; }
+    private int selectedDays = 7;
+    private string? error;
+    private TrackerResult? result;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        error = null;
+        result = null;
+        if (Days is null) return;
+        if (!int.TryParse(Days, out var days) || days is < 1 or > 365)
+        {
+            error = "Enter a whole number of days between 1 and 365.";
+            return;
+        }
+        selectedDays = days;
+        try { result = await Canvas.GetUpcomingAsync(days); }
+        catch (CanvasException exception) { error = exception.Message; }
+    }
+}
