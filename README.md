@@ -37,6 +37,17 @@ A small ASP.NET Core Blazor app written in C# that shows upcoming Canvas assignm
 
 6. Open **http://localhost:5000**, enter a number of days from 1 to 365, and click **Load assignments**. Stop the server with Ctrl+C. To choose another port, use `dotnet run --urls http://localhost:5050`.
 
+**NOTE**: If you are on onyx, please run the following commands on the terminal to install dotnet:
+
+```sh
+curl -sSL https://dot.net/v1/dotnet-install.sh | bash /dev/stdin --channel LTS
+echo 'export DOTNET_ROOT=$HOME/.dotnet' >> ~/.bashrc
+echo 'export PATH=$PATH:$HOME/.dotnet' >> ~/.bashrc
+source ~/.bashrc
+```
+
+After installing dotnet, you are free to start on step 3.
+
 ## Usage Examples
 
 - Enter **7** for assignments due over the next week.
